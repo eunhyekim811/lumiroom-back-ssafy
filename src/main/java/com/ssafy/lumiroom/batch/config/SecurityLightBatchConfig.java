@@ -56,7 +56,7 @@ public class SecurityLightBatchConfig {
     @Bean
     public SecurityLightApiReader securityLightApiReader() {
         // 커스텀 API 리더기 빈 등록
-        return new SecurityLightApiReader(baseUrl, serviceKey, 831);
+        return new SecurityLightApiReader(baseUrl, serviceKey, 1);
     }
 
     @Bean
