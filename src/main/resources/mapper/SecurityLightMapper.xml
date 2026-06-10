@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ssafy.lumiroom.batch.mapper.SecurityLightMapper">
+
+    <insert id="upsertSecurityLight" parameterType="com.ssafy.lumiroom.batch.domain.SecurityLightInfo">
+        INSERT INTO security_lights (
+        sn, fclt_type, fclt_cd, fclt_gvmnfc_nm, addr, road_nm_addr,
+        stdg_ctpv_cd, stdg_sgg_cd, stdg_emd_cd, location
+        ) VALUES (
+        #{sn}, #{fcltType}, #{fcltCd}, #{fcltGvmnfcNm}, #{addr}, #{roadNmAddr},
+        #{stdgCtpvCd}, #{stdgSggCd}, #{stdgEmdCd},
+        ST_GeomFromText(#{locationWkt}, 4326)  )
+        ON DUPLICATE KEY UPDATE
+        fclt_type = VALUES(fclt_type),
+        fclt_gvmnfc_nm = VALUES(fclt_gvmnfc_nm),
+        addr = VALUES(addr),
+        road_nm_addr = VALUES(road_nm_addr),
+        location = VALUES(location);
+    </insert>
+
+</mapper>

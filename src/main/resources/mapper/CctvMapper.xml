@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ssafy.lumiroom.batch.mapper.CctvMapper">
+
+    <insert id="upsertCctv">
+        INSERT INTO cctv_infos (
+        management_no, open_gov_code, agency_name, road_address, lot_address,
+        purpose, camera_count, pixels, direction, storage_days,
+        install_ym, phone, location, base_date
+        ) VALUES (
+        #{managementNo}, #{openGovCode}, #{agencyName}, #{roadAddress}, #{lotAddress},
+        #{purpose}, #{cameraCount}, #{pixels}, #{direction}, #{storageDays},
+        #{installYm}, #{phone}, ST_GeomFromText(#{locationWkt}, 4326), #{baseDate}
+        )
+        ON DUPLICATE KEY UPDATE
+        open_gov_code = VALUES(open_gov_code),
+        agency_name = VALUES(agency_name),
+        purpose = VALUES(purpose),
+        camera_count = VALUES(camera_count),
+        pixels = VALUES(pixels),
+        location = ST_GeomFromText(#{locationWkt}, 4326),
+        base_date = VALUES(base_date)
+    </insert>
+
+</mapper>
