@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ssafy.lumiroom.batch.mapper.RealEstateTradeMapper">
+
+    <insert id="upsertRealEstateTrade" parameterType="com.ssafy.lumiroom.batch.domain.RealEstateTradeInfo">
+        INSERT INTO real_estate_trades (
+        trade_hash, source_file, no_in_file, sigungu, lot_number, main_number, sub_number,
+        property_name, property_type, road_condition, rent_type, exclusive_area, contract_area,
+        contract_year_month, contract_day, contract_date, deposit_amount, monthly_rent_amount,
+        trade_amount, floor, built_year, road_name, canceled_date, deal_type, broker_location,
+        registration_date, apartment_dong_name, buyer, seller, contract_period, contract_type, renewal_request_right,
+        previous_deposit_amount, previous_monthly_rent_amount
+        ) VALUES (
+        #{tradeHash}, #{sourceFile}, #{noInFile}, #{sigungu}, #{lotNumber}, #{mainNumber}, #{subNumber},
+        #{propertyName}, #{propertyType}, #{roadCondition}, #{rentType}, #{exclusiveArea}, #{contractArea},
+        #{contractYearMonth}, #{contractDay}, #{contractDate}, #{depositAmount}, #{monthlyRentAmount},
+        #{tradeAmount}, #{floor}, #{builtYear}, #{roadName}, #{canceledDate}, #{dealType}, #{brokerLocation},
+        #{registrationDate}, #{apartmentDongName}, #{buyer}, #{seller}, #{contractPeriod}, #{contractType}, #{renewalRequestRight},
+        #{previousDepositAmount}, #{previousMonthlyRentAmount}
+        )
+        ON DUPLICATE KEY UPDATE
+        source_file = VALUES(source_file),
+        no_in_file = VALUES(no_in_file),
+        sigungu = VALUES(sigungu),
+        lot_number = VALUES(lot_number),
+        main_number = VALUES(main_number),
+        sub_number = VALUES(sub_number),
+        property_name = VALUES(property_name),
+        property_type = VALUES(property_type),
+        road_condition = VALUES(road_condition),
+        rent_type = VALUES(rent_type),
+        exclusive_area = VALUES(exclusive_area),
+        contract_area = VALUES(contract_area),
+        contract_year_month = VALUES(contract_year_month),
+        contract_day = VALUES(contract_day),
+        contract_date = VALUES(contract_date),
+        deposit_amount = VALUES(deposit_amount),
+        monthly_rent_amount = VALUES(monthly_rent_amount),
+        trade_amount = VALUES(trade_amount),
+        floor = VALUES(floor),
+        built_year = VALUES(built_year),
+        road_name = VALUES(road_name),
+        canceled_date = VALUES(canceled_date),
+        deal_type = VALUES(deal_type),
+        broker_location = VALUES(broker_location),
+        registration_date = VALUES(registration_date),
+        apartment_dong_name = VALUES(apartment_dong_name),
+        buyer = VALUES(buyer),
+        seller = VALUES(seller),
+        contract_period = VALUES(contract_period),
+        contract_type = VALUES(contract_type),
+        renewal_request_right = VALUES(renewal_request_right),
+        previous_deposit_amount = VALUES(previous_deposit_amount),
+        previous_monthly_rent_amount = VALUES(previous_monthly_rent_amount),
+        updated_at = CURRENT_TIMESTAMP
+    </insert>
+
+</mapper>
