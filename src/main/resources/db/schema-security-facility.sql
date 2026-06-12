@@ -1,0 +1,21 @@
+CREATE TABLE IF NOT EXISTS security_facilities (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    objt_id VARCHAR(100) NOT NULL,
+    police VARCHAR(100),
+    polcsttn VARCHAR(100),
+    fclty_ty VARCHAR(100),
+    fclty_cd VARCHAR(50),
+    fclty_nm VARCHAR(200),
+    adres VARCHAR(500),
+    rn_adres VARCHAR(500),
+    telno VARCHAR(50),
+    ctprvn_cd VARCHAR(20),
+    sgg_cd VARCHAR(20),
+    x DECIMAL(18, 8),
+    y DECIMAL(18, 8),
+    tmp_x DECIMAL(18, 8),
+    tmp_y DECIMAL(18, 8),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_security_facilities_objt_id (objt_id)
+);

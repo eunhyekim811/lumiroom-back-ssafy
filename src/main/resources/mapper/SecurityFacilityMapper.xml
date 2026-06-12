@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ssafy.lumiroom.batch.mapper.SecurityFacilityMapper">
+
+    <insert id="upsertSecurityFacility" parameterType="com.ssafy.lumiroom.batch.domain.SecurityFacilityInfo">
+        INSERT INTO security_facilities (
+        objt_id, police, polcsttn, fclty_ty, fclty_cd, fclty_nm,
+        adres, rn_adres, telno, ctprvn_cd, sgg_cd, x, y, tmp_x, tmp_y
+        ) VALUES (
+        #{objtId}, #{police}, #{polcsttn}, #{fcltyTy}, #{fcltyCd}, #{fcltyNm},
+        #{adres}, #{rnAdres}, #{telno}, #{ctprvnCd}, #{sggCd}, #{x}, #{y}, #{tmpX}, #{tmpY}
+        )
+        ON DUPLICATE KEY UPDATE
+        police = VALUES(police),
+        polcsttn = VALUES(polcsttn),
+        fclty_ty = VALUES(fclty_ty),
+        fclty_cd = VALUES(fclty_cd),
+        fclty_nm = VALUES(fclty_nm),
+        adres = VALUES(adres),
+        rn_adres = VALUES(rn_adres),
+        telno = VALUES(telno),
+        ctprvn_cd = VALUES(ctprvn_cd),
+        sgg_cd = VALUES(sgg_cd),
+        x = VALUES(x),
+        y = VALUES(y),
+        tmp_x = VALUES(tmp_x),
+        tmp_y = VALUES(tmp_y),
+        updated_at = CURRENT_TIMESTAMP
+    </insert>
+
+</mapper>
