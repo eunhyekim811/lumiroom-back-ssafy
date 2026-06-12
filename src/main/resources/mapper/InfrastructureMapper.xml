@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ssafy.lumiroom.infra.dao.InfrastructureMapper">
+
+    <select id="getInfraMarkersByBounds" parameterType="com.ssafy.lumiroom.infra.dto.InfraReqDto"
+            resultType="com.ssafy.lumiroom.infra.dto.InfraResDto">
+        <choose>
+            <when test="type == 'cctv'">
+                SELECT
+                CAST(id AS CHAR) AS id,
+                ST_X(location) AS latitude,   ST_Y(location) AS longitude   FROM cctv_infos
+            </when>
+            <when test="type == 'securityLight'">
+                SELECT
+                sn AS id,
+                ST_X(location) AS latitude,
+                ST_Y(location) AS longitude
+                FROM security_lights
+            </when>
+            <when test="type == 'streetLight'">
+                SELECT
+                sn AS id,
+                ST_X(location) AS latitude,
+                ST_Y(location) AS longitude
+                FROM street_lights
+            </when>
+            <otherwise>
+                SELECT CAST(id AS CHAR) AS id, ST_X(location) AS latitude, ST_Y(location) AS longitude
+                FROM cctv_infos
+            </otherwise>
+        </choose>
+
+        WHERE MBRContains(
+        ST_GeomFromText(
+        'POLYGON((
+        ${swLat} ${swLng},
+        ${neLat} ${swLng},
+        ${neLat} ${neLng},
+        ${swLat} ${neLng},
+        ${swLat} ${swLng}
+        ))',
+        4326
+        ),
+        location
+        )
+    </select>
+
+</mapper>
