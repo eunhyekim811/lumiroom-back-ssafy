@@ -13,7 +13,7 @@ import org.xml.sax.InputSource;
 
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilderFactory;
-import java.io.StringReader;
+import java.io.ByteArrayInputStream;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.util.Collections;
@@ -73,8 +73,8 @@ public class SecurityFacilityApiReader implements ItemReader<SecurityFacilityDto
                     + "&numOfRows=" + numOfRows
                     + "&returnType=xml";
 
-            ResponseEntity<String> response = restTemplate.getForEntity(new URI(url), String.class);
-            String responseBody = response.getBody();
+            ResponseEntity<byte[]> response = restTemplate.getForEntity(new URI(url), byte[].class);
+            byte[] responseBody = response.getBody();
             logResponsePreview(responseBody);
             Document document = parseXml(responseBody);
 
@@ -103,17 +103,17 @@ public class SecurityFacilityApiReader implements ItemReader<SecurityFacilityDto
         }
     }
 
-    private void logResponsePreview(String responseBody) {
+    private void logResponsePreview(byte[] responseBody) {
         if (responseBody == null) {
             System.out.println(">>> [SecurityFacilityReader] response body preview: <null>");
             return;
         }
 
-        String preview = responseBody.substring(0, Math.min(500, responseBody.length()));
+        String preview = new String(responseBody, 0, Math.min(500, responseBody.length), java.nio.charset.StandardCharsets.UTF_8);
         System.out.println(">>> [SecurityFacilityReader] response body preview: " + preview);
     }
 
-    private Document parseXml(String responseBody) throws Exception {
+    private Document parseXml(byte[] responseBody) throws Exception {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
         factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
@@ -121,7 +121,7 @@ public class SecurityFacilityApiReader implements ItemReader<SecurityFacilityDto
         factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
         factory.setXIncludeAware(false);
         factory.setExpandEntityReferences(false);
-        return factory.newDocumentBuilder().parse(new InputSource(new StringReader(responseBody)));
+        return factory.newDocumentBuilder().parse(new InputSource(new ByteArrayInputStream(responseBody)));
     }
 
     private int extractTotalCount(Document document) {

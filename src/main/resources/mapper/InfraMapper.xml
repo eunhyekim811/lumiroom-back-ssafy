@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ssafy.lumiroom.domain.model.mapper.InfraMapper">
+
+    <sql id="pointDistance">
+        6371000 * 2 * ASIN(
+            SQRT(
+                POWER(SIN(RADIANS((lat - #{lat}) / 2)), 2)
+                + COS(RADIANS(#{lat})) * COS(RADIANS(lat))
+                * POWER(SIN(RADIANS((lng - #{lng}) / 2)), 2)
+            )
+        )
+    </sql>
+
+    <sql id="boundingBox">
+        lat BETWEEN #{lat} - (#{radius} / 111320.0)
+            AND #{lat} + (#{radius} / 111320.0)
+        AND lng BETWEEN #{lng} - (#{radius} / (111320.0 * GREATEST(ABS(COS(RADIANS(#{lat}))), 0.000001)))
+            AND #{lng} + (#{radius} / (111320.0 * GREATEST(ABS(COS(RADIANS(#{lat}))), 0.000001)))
+    </sql>
+
+    <sql id="spatialBoundingBox">
+        MBRContains(
+            ST_GeomFromText(
+                CONCAT(
+                    'POLYGON((',
+                    #{lat} - (#{radius} / 111320.0), ' ', #{lng} - (#{radius} / (111320.0 * GREATEST(ABS(COS(RADIANS(#{lat}))), 0.000001))), ',',
+                    #{lat} + (#{radius} / 111320.0), ' ', #{lng} - (#{radius} / (111320.0 * GREATEST(ABS(COS(RADIANS(#{lat}))), 0.000001))), ',',
+                    #{lat} + (#{radius} / 111320.0), ' ', #{lng} + (#{radius} / (111320.0 * GREATEST(ABS(COS(RADIANS(#{lat}))), 0.000001))), ',',
+                    #{lat} - (#{radius} / 111320.0), ' ', #{lng} + (#{radius} / (111320.0 * GREATEST(ABS(COS(RADIANS(#{lat}))), 0.000001))), ',',
+                    #{lat} - (#{radius} / 111320.0), ' ', #{lng} - (#{radius} / (111320.0 * GREATEST(ABS(COS(RADIANS(#{lat}))), 0.000001))),
+                    '))'
+                ),
+                4326
+            ),
+            location
+        )
+    </sql>
+
+    <select id="selectCctvs" resultType="com.ssafy.lumiroom.domain.model.dto.InfraResponse">
+        SELECT
+            id,
+            'cctv' AS type,
+            COALESCE(agency_name, management_no) AS name,
+            lat,
+            lng,
+            COALESCE(road_address, lot_address) AS address,
+            '공공데이터포털' AS source,
+            STR_TO_DATE(CONCAT(LEFT(install_ym, 4), '-', RIGHT(install_ym, 2), '-01'), '%Y-%m-%d') AS installed_at
+        FROM (
+            SELECT
+                id,
+                management_no,
+                agency_name,
+                road_address,
+                lot_address,
+                install_ym,
+                ST_X(location) AS lat,
+                ST_Y(location) AS lng
+            FROM cctv_infos
+            WHERE location IS NOT NULL
+              AND <include refid="spatialBoundingBox" />
+        ) infra
+        WHERE <include refid="boundingBox" />
+          AND <include refid="pointDistance" /> &lt;= #{radius}
+        ORDER BY <include refid="pointDistance" />
+    </select>
+
+    <select id="selectSecurityLights" resultType="com.ssafy.lumiroom.domain.model.dto.InfraResponse">
+        SELECT
+            2000000000000 + CRC32(sn) AS id,
+            'securityLight' AS type,
+            COALESCE(fclt_gvmnfc_nm, fclt_cd, sn) AS name,
+            lat,
+            lng,
+            COALESCE(road_nm_addr, addr) AS address,
+            '생활안전정보' AS source,
+            DATE(created_at) AS installed_at
+        FROM (
+            SELECT
+                sn,
+                fclt_gvmnfc_nm,
+                fclt_cd,
+                road_nm_addr,
+                addr,
+                created_at,
+                ST_X(location) AS lat,
+                ST_Y(location) AS lng
+            FROM security_lights
+            WHERE location IS NOT NULL
+              AND <include refid="spatialBoundingBox" />
+        ) infra
+        WHERE <include refid="boundingBox" />
+          AND <include refid="pointDistance" /> &lt;= #{radius}
+        ORDER BY <include refid="pointDistance" />
+    </select>
+
+    <select id="selectStreetLights" resultType="com.ssafy.lumiroom.domain.model.dto.InfraResponse">
+        SELECT
+            3000000000000 + CRC32(sn) AS id,
+            'streetLight' AS type,
+            COALESCE(fclt_gvmnfc_nm, fclt_cd, sn) AS name,
+            lat,
+            lng,
+            COALESCE(road_nm_addr, addr) AS address,
+            '생활안전정보' AS source,
+            DATE(created_at) AS installed_at
+        FROM (
+            SELECT
+                sn,
+                fclt_gvmnfc_nm,
+                fclt_cd,
+                road_nm_addr,
+                addr,
+                created_at,
+                ST_X(location) AS lat,
+                ST_Y(location) AS lng
+            FROM street_lights
+            WHERE location IS NOT NULL
+              AND <include refid="spatialBoundingBox" />
+        ) infra
+        WHERE <include refid="boundingBox" />
+          AND <include refid="pointDistance" /> &lt;= #{radius}
+        ORDER BY <include refid="pointDistance" />
+    </select>
+
+    <select id="selectPoliceFacilities" resultType="com.ssafy.lumiroom.domain.model.dto.InfraResponse">
+        SELECT
+            id,
+            'police' AS type,
+            COALESCE(fclty_nm, polcsttn, police, objt_id) AS name,
+            lat,
+            lng,
+            COALESCE(rn_adres, adres) AS address,
+            '생활안전지도' AS source,
+            DATE(created_at) AS installed_at
+        FROM (
+            SELECT
+                id,
+                objt_id,
+                police,
+                polcsttn,
+                fclty_nm,
+                rn_adres,
+                adres,
+                created_at,
+                180.0 / PI() * (2.0 * ATAN(EXP((y / 20037508.34 * 180.0) * PI() / 180.0)) - PI() / 2.0) AS lat,
+                x / 20037508.34 * 180.0 AS lng
+            FROM security_facilities
+            WHERE x IS NOT NULL
+              AND y IS NOT NULL
+              AND x != 0
+              AND y != 0
+        ) infra
+        WHERE <include refid="boundingBox" />
+          AND <include refid="pointDistance" /> &lt;= #{radius}
+        ORDER BY <include refid="pointDistance" />
+    </select>
+</mapper>
