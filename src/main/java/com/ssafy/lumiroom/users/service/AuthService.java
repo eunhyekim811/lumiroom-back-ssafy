@@ -8,4 +8,6 @@ public interface AuthService {
     public void signup(AuthReqDto.SignUp request);
     public AuthResDto.Token login(AuthReqDto.Login request);
     public void logout(String accessToken, String email);
+    public Long getUserIdByEmail(String email);
+    public AuthResDto.Token reissue(String refreshToken);
 }

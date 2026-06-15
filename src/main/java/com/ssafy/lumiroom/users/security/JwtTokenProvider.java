@@ -36,11 +36,22 @@ public class JwtTokenProvider {
                 .compact();
     }
 
-    public String createRefreshToken() {
+    public String createRefreshToken(String email) {
         return Jwts.builder()
+                .setSubject(email)
                 .setExpiration(new Date(System.currentTimeMillis() + REFRESH_TOKEN_TIME))
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
+    }
+
+    // 토큰에서 이메일(Subject)을 꺼내는 메서드
+    public String getEmailFromToken(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .getSubject();
     }
 
     public boolean validateToken(String token) {
@@ -54,10 +65,16 @@ public class JwtTokenProvider {
 
     public Authentication getAuthentication(String token) {
         Claims claims = Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
+
+        String role = claims.get("role", String.class);
+        if (role == null || role.isEmpty()) {
+            role = "USER";
+        }
+
         UserDetails userDetails = User.builder()
                 .username(claims.getSubject())
                 .password("")
-                .roles(claims.get("role", String.class))
+                .roles(role)
                 .build();
         return new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());
     }

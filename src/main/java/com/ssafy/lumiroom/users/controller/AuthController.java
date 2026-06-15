@@ -36,4 +36,11 @@ public class AuthController {
         authService.logout(accessToken, userDetails.getUsername());
         return ResponseEntity.ok("로그아웃 성공");
     }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<AuthResDto.Token> refresh(@RequestHeader("RefreshToken") String refreshToken) {
+        // 헤더나 바디로 전달받은 RefreshToken으로 재발급 진행
+        AuthResDto.Token tokenQuery = authService.reissue(refreshToken);
+        return ResponseEntity.ok(tokenQuery);
+    }
 }

@@ -10,4 +10,5 @@ public interface UserMapper {
     int insertUser(User user);
     Optional<User> findByEmail(String email);
     int existsByEmail(String email);
+    Long uidByEmail(String email);
 }

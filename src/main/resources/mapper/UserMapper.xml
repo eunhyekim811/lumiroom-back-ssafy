@@ -15,6 +15,12 @@
         WHERE email = #{email}
     </select>
 
+    <select id="uidByEmail" parameterType="string" resultType="Long">
+        SELECT id
+        FROM users
+        WHERE email = #{email}
+    </select>
+
     <select id="existsByEmail" parameterType="string" resultType="int">
         SELECT EXISTS (
         SELECT 1 FROM users WHERE email = #{email}
