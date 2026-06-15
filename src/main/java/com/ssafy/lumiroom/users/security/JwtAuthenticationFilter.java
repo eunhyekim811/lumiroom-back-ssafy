@@ -31,6 +31,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (ObjectUtils.isEmpty(isLogout)) {
                 Authentication authentication = jwtTokenProvider.getAuthentication(token);
                 SecurityContextHolder.getContext().setAuthentication(authentication);
+            } else {
+                // 블랙리스트에 있다면 로그를 남기고 인증 객체를 세팅하지 않음 -> 자연스럽게 401/403 에러 발생
+                logger.warn("블랙리스트에 등록된 만료(로그아웃) 토큰으로 접근 시도");
             }
         }
         filterChain.doFilter(request, response);

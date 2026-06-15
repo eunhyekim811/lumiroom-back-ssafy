@@ -34,7 +34,7 @@ public class ReviewController {
         return ResponseEntity.status(HttpStatus.CREATED).body("리뷰가 성공적으로 등록되었습니다.");
     }
 
-    // 2. 특정 매물의 리뷰 목록 조회 (비로그인도 열람 가능하게 하려면 Security 설정에서 permitAll 처리)
+    // 2. 특정 매물의 리뷰 목록 조회
     @GetMapping("/{propertyId}")
     public ResponseEntity<List<ReviewRes>> getReviews(@PathVariable("propertyId") Long propertyId) {
         List<ReviewRes> reviews = reviewService.getReviewsByProperty(propertyId);

@@ -5,6 +5,7 @@ import com.ssafy.lumiroom.users.dto.AuthReqDto;
 import com.ssafy.lumiroom.users.dto.AuthResDto;
 import com.ssafy.lumiroom.users.dto.User;
 import com.ssafy.lumiroom.users.security.JwtTokenProvider;
+import io.jsonwebtoken.ExpiredJwtException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -62,19 +63,62 @@ public class AuthServiceImpl implements AuthService{
     }
 
     @Transactional
-    public void logout(String accessToken, String email) {
-        if (!jwtTokenProvider.validateToken(accessToken)) {
-            throw new RuntimeException("유효하지 않은 토큰입니다.");
+    public void logout(String accessToken, String refreshToken) {
+        String email = null;
+
+        // 1. Bearer 접두사 제거
+        if (accessToken != null && accessToken.startsWith("Bearer ")) {
+            accessToken = accessToken.substring(7);
+        }
+        if (refreshToken != null && refreshToken.startsWith("Bearer ")) {
+            refreshToken = refreshToken.substring(7);
         }
 
-        // Redis에서 Refresh Token 삭제
-        if (Boolean.TRUE.equals(redisTemplate.hasKey("RT:" + email))) {
+//        System.out.println(accessToken + ", " + refreshToken);
+        // 2. 만료 여부 상관없이 엑세스 토큰에서 이메일 무조건 추출!
+        if (accessToken != null && !accessToken.trim().isEmpty()) {
+            try {
+                email = jwtTokenProvider.getEmailFromToken(accessToken);
+            } catch (Exception e) {
+                System.out.println("AT 파싱 실패, RT 확인 필요");
+            }
+        }
+
+        // 3. 만약 AT가 안 들어왔을 때 RT 파싱
+        if (email == null && refreshToken != null && !refreshToken.trim().isEmpty()) {
+            try {
+                email = jwtTokenProvider.getEmailFromToken(refreshToken);
+            } catch (Exception e) {
+                System.out.println("모든 토큰에서 이메일 추출 실패");
+            }
+        }
+
+        // 4. 추출된 이메일이 확정되면 Redis를 확실하게 청소합니다.
+        if (email != null) {
+            // Refresh Token 삭제
+            redisTemplate.delete("RT:" + email);
+            System.out.println("[로그아웃 성공] Redis에서 RT:" + email + " 제거 완료");
+
+            // Access Token 블랙리스트 등재 (만료 전 정상 로그아웃 시에만 작동)
+            try {
+                if (accessToken != null && jwtTokenProvider.validateToken(accessToken)) {
+                    Long expiration = jwtTokenProvider.getExpiration(accessToken);
+                    redisTemplate.opsForValue().set(accessToken, "logout", expiration, TimeUnit.MILLISECONDS);
+                    System.out.println("유효한 AT 블랙리스트 등록 완료");
+                }
+            } catch (Exception e) {
+
+            }
+        } else {
+            System.out.println("식별 가능한 유저 정보가 없어 Redis 삭제가 생략되었습니다.");
+        }
+    }
+
+    @Transactional
+    public void logoutByEmail(String email) {
+        if (email != null && Boolean.TRUE.equals(redisTemplate.hasKey("RT:" + email))) {
             redisTemplate.delete("RT:" + email);
         }
-
-        // Access Token Blacklist 등록
-        Long expiration = jwtTokenProvider.getExpiration(accessToken);
-        redisTemplate.opsForValue().set(accessToken, "logout", expiration, TimeUnit.MILLISECONDS);
     }
 
     @Override

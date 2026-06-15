@@ -5,6 +5,7 @@ import com.ssafy.lumiroom.users.dto.AuthResDto;
 import com.ssafy.lumiroom.users.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -28,13 +29,14 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<String> logout(
-            @RequestHeader("Authorization") String token,
-            @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<?> logout(
+            @RequestHeader(value = "Authorization", required = false) String accessToken,
+            @RequestHeader(value = "RefreshToken", required = false) String refreshToken) {
 
-        String accessToken = token.substring(7); // "Bearer " 제거
-        authService.logout(accessToken, userDetails.getUsername());
-        return ResponseEntity.ok("로그아웃 성공");
+        // 서비스로 두 토큰을 모두 넘겨서 투트랙(파기 + 블랙리스트) 처리
+        authService.logout(accessToken, refreshToken);
+
+        return ResponseEntity.ok("성공적으로 로그아웃 되었습니다.");
     }
 
     @PostMapping("/refresh")
