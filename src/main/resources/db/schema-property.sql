@@ -10,6 +10,9 @@ CREATE TABLE properties (
     main_number VARCHAR(10) NULL,
     sub_number VARCHAR(10) NULL,
     road_name VARCHAR(200) NULL,
+    latitude DECIMAL(10, 7) NULL COMMENT '위도',
+    longitude DECIMAL(10, 7) NULL COMMENT '경도',
+    location POINT NULL COMMENT '매물 좌표 WGS84, POINT(경도 위도)',
     built_year SMALLINT NULL,
     min_exclusive_area DECIMAL(12, 4) NULL,
     max_exclusive_area DECIMAL(12, 4) NULL,
@@ -31,6 +34,7 @@ CREATE TABLE properties (
     KEY idx_properties_region_code (region_code),
     KEY idx_properties_region_type (region_code, property_type),
     KEY idx_properties_name (property_name),
+    KEY idx_properties_lat_lng (latitude, longitude),
     CONSTRAINT fk_properties_region_code
         FOREIGN KEY (region_code) REFERENCES legal_dongs (code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
