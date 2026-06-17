@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ssafy.lumiroom.batch.mapper.LegalDongMapper">
+
+    <insert id="upsertLegalDong" parameterType="com.ssafy.lumiroom.batch.domain.LegalDongInfo">
+        INSERT INTO legal_dongs (
+        code, name, is_active, sido_code, sigungu_code, dong_code
+        ) VALUES (
+        #{code}, #{name}, #{active}, #{sidoCode}, #{sigunguCode}, #{dongCode}
+        )
+        ON DUPLICATE KEY UPDATE
+        name = VALUES(name),
+        is_active = VALUES(is_active),
+        sido_code = VALUES(sido_code),
+        sigungu_code = VALUES(sigungu_code),
+        dong_code = VALUES(dong_code),
+        updated_at = CURRENT_TIMESTAMP
+    </insert>
+
+</mapper>
