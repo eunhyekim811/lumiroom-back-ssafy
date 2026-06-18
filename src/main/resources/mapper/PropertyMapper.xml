@@ -78,4 +78,30 @@
         updated_at = CURRENT_TIMESTAMP
     </insert>
 
+    <select id="findPropertiesMissingCoordinates" resultType="com.ssafy.lumiroom.batch.domain.PropertyGeocodeTarget">
+        SELECT
+            id,
+            region_name,
+            sigungu,
+            property_name,
+            road_name,
+            lot_number
+        FROM properties
+        WHERE latitude IS NULL
+           OR longitude IS NULL
+           OR location IS NULL
+        ORDER BY id
+        LIMIT #{limit}
+    </select>
+
+    <update id="updatePropertyCoordinates">
+        UPDATE properties
+        SET
+            latitude = #{latitude},
+            longitude = #{longitude},
+            location = ST_SRID(POINT(#{longitude}, #{latitude}), 4326),
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+    </update>
+
 </mapper>
