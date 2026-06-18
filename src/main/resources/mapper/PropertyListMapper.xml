@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ssafy.lumiroom.domain.model.mapper.PropertyListMapper">
+
+    <sql id="boundingBoxCondition">
+        p.latitude BETWEEN #{lat} - (#{radius} / 111320.0)
+            AND #{lat} + (#{radius} / 111320.0)
+        AND p.longitude BETWEEN #{lng} - (#{radius} / (111320.0 * GREATEST(ABS(COS(RADIANS(#{lat}))), 0.000001)))
+            AND #{lng} + (#{radius} / (111320.0 * GREATEST(ABS(COS(RADIANS(#{lat}))), 0.000001)))
+    </sql>
+
+    <sql id="distanceExpression">
+        6371000 * 2 * ASIN(
+            SQRT(
+                POWER(SIN(RADIANS((p.latitude - #{lat}) / 2)), 2)
+                + COS(RADIANS(#{lat})) * COS(RADIANS(p.latitude))
+                * POWER(SIN(RADIANS((p.longitude - #{lng}) / 2)), 2)
+            )
+        )
+    </sql>
+
+    <sql id="withinRadiusCondition">
+        p.latitude IS NOT NULL
+        AND p.longitude IS NOT NULL
+        AND <include refid="boundingBoxCondition" />
+        AND <include refid="distanceExpression" /> &lt;= #{radius}
+    </sql>
+
+    <select id="selectPropertiesWithinRadius"
+            resultType="com.ssafy.lumiroom.domain.model.dto.PropertyListItemResponse">
+        SELECT
+            p.id,
+            COALESCE(NULLIF(p.property_name, ''), NULLIF(p.road_name, ''), NULLIF(p.lot_number, ''), '이름 없음')
+                AS property_name,
+            rsm.safety_score,
+            rsm.safety_grade,
+            p.property_type AS rent_type,
+            CASE
+                WHEN p.min_trade_amount IS NOT NULL
+                    AND (p.min_deposit_amount IS NOT NULL OR p.min_monthly_rent_amount IS NOT NULL) THEN 'MIXED'
+                WHEN p.min_trade_amount IS NOT NULL THEN 'SALE'
+                WHEN COALESCE(p.max_monthly_rent_amount, 0) &gt; 0 THEN 'MONTHLY_RENT'
+                WHEN p.min_deposit_amount IS NOT NULL THEN 'JEONSE'
+                ELSE 'UNKNOWN'
+            END AS transaction_type,
+            p.min_deposit_amount,
+            p.max_deposit_amount,
+            p.min_monthly_rent_amount,
+            p.max_monthly_rent_amount,
+            p.min_trade_amount,
+            p.max_trade_amount,
+            TRIM(CONCAT_WS(' ',
+                NULLIF(p.region_name, ''),
+                COALESCE(NULLIF(p.road_name, ''), NULLIF(p.lot_number, ''))
+            )) AS address,
+            p.latitude,
+            p.longitude
+        FROM properties p
+        LEFT JOIN region_safety_masters rsm
+          ON rsm.region_code = p.region_code
+        WHERE <include refid="withinRadiusCondition" />
+        ORDER BY p.id DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countPropertiesWithinRadius" resultType="long">
+        SELECT COUNT(*)
+        FROM properties p
+        WHERE <include refid="withinRadiusCondition" />
+    </select>
+
+</mapper>
