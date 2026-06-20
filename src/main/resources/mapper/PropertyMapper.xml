@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ssafy.lumiroom.batch.mapper.PropertyMapper">
+
+    <insert id="upsertPropertiesFromRealEstateTrades">
+        INSERT INTO properties (
+        property_identity_hash, region_code, region_name, sigungu, property_name, property_type,
+        lot_number, main_number, sub_number, road_name, built_year,
+        min_exclusive_area, max_exclusive_area, min_contract_area, max_contract_area,
+        min_deposit_amount, max_deposit_amount, min_monthly_rent_amount, max_monthly_rent_amount,
+        min_trade_amount, max_trade_amount, first_contract_date, latest_contract_date, trade_count
+        )
+        SELECT
+        SHA2(CONCAT_WS('|',
+            ld.code,
+            COALESCE(t.property_type, ''),
+            COALESCE(t.property_name, ''),
+            COALESCE(t.lot_number, ''),
+            COALESCE(t.main_number, ''),
+            COALESCE(t.sub_number, ''),
+            COALESCE(t.road_name, '')
+        ), 256) AS property_identity_hash,
+        ld.code AS region_code,
+        ld.name AS region_name,
+        t.sigungu,
+        NULLIF(TRIM(t.property_name), '') AS property_name,
+        NULLIF(TRIM(t.property_type), '') AS property_type,
+        NULLIF(TRIM(t.lot_number), '') AS lot_number,
+        NULLIF(TRIM(t.main_number), '') AS main_number,
+        NULLIF(TRIM(t.sub_number), '') AS sub_number,
+        NULLIF(TRIM(t.road_name), '') AS road_name,
+        MAX(t.built_year) AS built_year,
+        MIN(t.exclusive_area) AS min_exclusive_area,
+        MAX(t.exclusive_area) AS max_exclusive_area,
+        MIN(t.contract_area) AS min_contract_area,
+        MAX(t.contract_area) AS max_contract_area,
+        MIN(t.deposit_amount) AS min_deposit_amount,
+        MAX(t.deposit_amount) AS max_deposit_amount,
+        MIN(t.monthly_rent_amount) AS min_monthly_rent_amount,
+        MAX(t.monthly_rent_amount) AS max_monthly_rent_amount,
+        MIN(t.trade_amount) AS min_trade_amount,
+        MAX(t.trade_amount) AS max_trade_amount,
+        MIN(t.contract_date) AS first_contract_date,
+        MAX(t.contract_date) AS latest_contract_date,
+        COUNT(*) AS trade_count
+        FROM real_estate_trades t
+        JOIN legal_dongs ld
+          ON ld.name = t.sigungu
+         AND ld.is_active = 1
+        GROUP BY
+        ld.code, ld.name, t.sigungu, t.property_type, t.property_name,
+        t.lot_number, t.main_number, t.sub_number, t.road_name
+        ON DUPLICATE KEY UPDATE
+        region_code = VALUES(region_code),
+        region_name = VALUES(region_name),
+        sigungu = VALUES(sigungu),
+        property_name = VALUES(property_name),
+        property_type = VALUES(property_type),
+        lot_number = VALUES(lot_number),
+        main_number = VALUES(main_number),
+        sub_number = VALUES(sub_number),
+        road_name = VALUES(road_name),
+        built_year = VALUES(built_year),
+        min_exclusive_area = VALUES(min_exclusive_area),
+        max_exclusive_area = VALUES(max_exclusive_area),
+        min_contract_area = VALUES(min_contract_area),
+        max_contract_area = VALUES(max_contract_area),
+        min_deposit_amount = VALUES(min_deposit_amount),
+        max_deposit_amount = VALUES(max_deposit_amount),
+        min_monthly_rent_amount = VALUES(min_monthly_rent_amount),
+        max_monthly_rent_amount = VALUES(max_monthly_rent_amount),
+        min_trade_amount = VALUES(min_trade_amount),
+        max_trade_amount = VALUES(max_trade_amount),
+        first_contract_date = VALUES(first_contract_date),
+        latest_contract_date = VALUES(latest_contract_date),
+        trade_count = VALUES(trade_count),
+        updated_at = CURRENT_TIMESTAMP
+    </insert>
+
+    <select id="findPropertiesMissingCoordinates" resultType="com.ssafy.lumiroom.batch.domain.PropertyGeocodeTarget">
+        SELECT
+            id,
+            region_name,
+            sigungu,
+            property_name,
+            road_name,
+            lot_number
+        FROM properties
+        WHERE latitude IS NULL
+           OR longitude IS NULL
+           OR location IS NULL
+        ORDER BY id
+        LIMIT #{limit}
+    </select>
+
+    <update id="updatePropertyCoordinates">
+        UPDATE properties
+        SET
+            latitude = #{latitude},
+            longitude = #{longitude},
+            location = ST_SRID(POINT(#{longitude}, #{latitude}), 4326),
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+    </update>
+
+</mapper>
