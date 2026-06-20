@@ -9,7 +9,9 @@
         (SELECT COUNT(*) FROM street_lights
         WHERE ST_Distance_Sphere(location, ST_GeomFromText(#{wktPoint}, 4326)) &lt;= #{radius}) AS streetLightCount,
         (SELECT COUNT(*) FROM security_lights
-        WHERE ST_Distance_Sphere(location, ST_GeomFromText(#{wktPoint}, 4326)) &lt;= #{radius}) AS securityLightCount
+        WHERE ST_Distance_Sphere(location, ST_GeomFromText(#{wktPoint}, 4326)) &lt;= #{radius}) AS securityLightCount,
+        (SELECT COUNT(*) FROM security_facilities
+        WHERE (POWER(x - #{epsg3857X}, 2) + POWER(y - #{epsg3857Y}, 2)) &lt;= POWER(#{projectedRadius}, 2)) AS policeStationCount
     </select>
 
 </mapper>

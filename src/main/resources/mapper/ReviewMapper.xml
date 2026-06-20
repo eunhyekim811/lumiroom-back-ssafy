@@ -13,7 +13,7 @@
         SELECT
         r.id AS id,
         r.user_id AS userId,
-        u.email AS userEmail, r.property_id AS propertyId,
+        u.nickname AS userName, r.property_id AS propertyId,
         r.content AS content,
         r.rating AS rating,
         r.created_at AS createdAt
