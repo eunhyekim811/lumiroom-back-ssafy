@@ -20,7 +20,7 @@ public class ReviewController {
     private final ReviewService reviewService;
     private final AuthService userService;
 
-    // 1. 리뷰 작성 (로그인 필수)
+    // 1. 리뷰 작성
     @PostMapping
     public ResponseEntity<String> createReview(
             @RequestBody ReviewReq request,

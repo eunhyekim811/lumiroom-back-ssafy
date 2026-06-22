@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ssafy.lumiroom.favorite.dao.FavoriteMapper">
+
+    <insert id="insertFavorite" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO favorite_properties (user_id, property_id)
+        VALUES (#{userId}, #{propertyId})
+    </insert>
+
+    <delete id="deleteFavorite">
+        DELETE FROM favorite_properties
+        WHERE user_id = #{userId} AND property_id = #{propertyId}
+    </delete>
+
+    <select id="findFavoritesByUserId" resultType="com.ssafy.lumiroom.favorite.dto.FavoriteRes">
+        SELECT 
+            f.id AS id,
+            f.property_id AS propertyId,
+            p.property_name AS title,
+            p.region_name AS region, 
+            p.sigungu AS sigungu, 
+            p.road_name AS road, 
+            p.min_deposit_amount AS minDepositAmount, 
+            p.max_deposit_amount AS maxDepositAmount, 
+            p.min_monthly_rent_amount AS minMonthlyRentAmount, 
+            p.max_monthly_rent_amount AS maxMonthlyRentAmount, 
+            p.min_trade_amount AS minTradeAmount, 
+            p.max_trade_amount AS maxTradeAmount, 
+            f.created_at AS createdAt
+        FROM favorite_properties f
+        JOIN properties p ON f.property_id = p.id
+        WHERE f.user_id = #{userId}
+        ORDER BY f.created_at DESC
+    </select>
+
+    <select id="findByUserIdAndPropertyId" resultType="com.ssafy.lumiroom.favorite.dto.FavoriteProperty">
+        SELECT id, user_id AS userId, property_id AS propertyId, created_at AS createdAt
+        FROM favorite_properties
+        WHERE user_id = #{userId} AND property_id = #{propertyId}
+    </select>
+
+</mapper>
