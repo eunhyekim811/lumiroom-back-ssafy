@@ -23,6 +23,7 @@ public class UserServiceImpl implements UserService{
                 .orElseThrow(() -> new RuntimeException("존재하지 않는 사용자입니다."));
 		
 		return new UserResDto(
+				member.getId(),
                 member.getEmail(),
                 member.getNickname(),
                 member.getRole(),
