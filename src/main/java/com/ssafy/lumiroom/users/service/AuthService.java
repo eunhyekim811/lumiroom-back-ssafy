@@ -5,7 +5,7 @@ import com.ssafy.lumiroom.users.dto.AuthResDto;
 
 public interface AuthService {
 
-    public void signup(AuthReqDto.SignUp request);
+    public boolean signup(AuthReqDto.SignUp request);
     public AuthResDto.Token login(AuthReqDto.Login request);
     public void logout(String accessToken, String refreshToken);
     public Long getUserIdByEmail(String email);
