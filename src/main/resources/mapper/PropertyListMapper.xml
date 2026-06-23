@@ -32,7 +32,7 @@
             resultType="com.ssafy.lumiroom.domain.model.dto.PropertyListItemResponse">
         SELECT
             p.id,
-            COALESCE(NULLIF(p.property_name, ''), NULLIF(p.road_name, ''), NULLIF(p.lot_number, ''), '이름 없음')
+            p.property_name
                 AS property_name,
             p.built_year,
             pss.safety_score,
@@ -74,5 +74,42 @@
         FROM properties p
         WHERE <include refid="withinRadiusCondition" />
     </select>
+    
+    
+    <select id="findByIdWithSafety" resultType="com.ssafy.lumiroom.domain.model.dto.PropertyListItemResponse">
+	    SELECT 
+	        p.id AS id,
+	        p.property_name AS propertyName,
+	        p.built_year AS builtYear,
+	        ps.safety_score AS safetyScore,
+	        ps.safety_grade AS safetyGrade,
+	        ps.cctv_count AS cctvCount,
+	        ps.security_light_count AS securityLightCount,
+	        ps.security_facility_count AS securityFacilityCount,
+	        p.property_type AS rent_type,
+            CASE
+                WHEN p.min_trade_amount IS NOT NULL
+                    AND (p.min_deposit_amount IS NOT NULL OR p.min_monthly_rent_amount IS NOT NULL) THEN 'MIXED'
+                WHEN p.min_trade_amount IS NOT NULL THEN 'SALE'
+                WHEN COALESCE(p.max_monthly_rent_amount, 0) &gt; 0 THEN 'MONTHLY_RENT'
+                WHEN p.min_deposit_amount IS NOT NULL THEN 'JEONSE'
+                ELSE 'UNKNOWN'
+            END AS transaction_type,
+	        p.min_deposit_amount AS minDepositAmount,
+	        p.max_deposit_amount AS maxDepositAmount,
+	        p.min_monthly_rent_amount AS minMonthlyRentAmount,
+	        p.max_monthly_rent_amount AS maxMonthlyRentAmount,
+	        p.min_trade_amount AS minTradeAmount,
+	        p.max_trade_amount AS maxTradeAmount,
+	        TRIM(CONCAT_WS(' ',
+                NULLIF(p.region_name, ''),
+                COALESCE(NULLIF(p.road_name, ''), NULLIF(p.lot_number, ''))
+            )) AS address,
+            ST_X(p.location) AS latitude, 
+	        ST_Y(p.location) AS longitude
+	    FROM properties p
+	    LEFT JOIN property_safety_summary ps ON p.id = ps.property_id
+	    WHERE p.id = #{id}
+	</select>
 
 </mapper>

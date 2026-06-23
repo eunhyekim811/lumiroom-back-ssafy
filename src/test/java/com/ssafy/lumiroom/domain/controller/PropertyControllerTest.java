@@ -1,5 +1,6 @@
 package com.ssafy.lumiroom.domain.controller;
 
+import com.ssafy.lumiroom.domain.model.dto.PropertyListItemResponse;
 import com.ssafy.lumiroom.domain.model.dto.PropertyListResponse;
 import com.ssafy.lumiroom.domain.model.service.PropertyListService;
 import org.junit.jupiter.api.Test;
@@ -49,5 +50,11 @@ class PropertyControllerTest {
             this.size = size;
             return response;
         }
+
+		@Override
+		public PropertyListItemResponse getPropertyDetail(Long id) {
+			// TODO Auto-generated method stub
+			return null;
+		}
     }
 }

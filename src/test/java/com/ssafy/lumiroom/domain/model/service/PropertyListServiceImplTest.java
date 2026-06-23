@@ -84,5 +84,11 @@ class PropertyListServiceImplTest {
         public long countPropertiesWithinRadius(double lat, double lng, double radius) {
             return count;
         }
+
+		@Override
+		public PropertyListItemResponse findByIdWithSafety(Long id) {
+			// TODO Auto-generated method stub
+			return null;
+		}
     }
 }
