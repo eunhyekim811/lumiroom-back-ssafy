@@ -13,6 +13,7 @@ public class PropertyListItemResponse {
 
     private Long id;
     private String propertyName;
+    private Integer builtYear;
     private BigDecimal safetyScore;
     private String safetyGrade;
     private String rentType;
