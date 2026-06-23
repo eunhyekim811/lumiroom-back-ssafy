@@ -13,5 +13,16 @@
         (SELECT COUNT(*) FROM security_facilities
         WHERE (POWER(x - #{epsg3857X}, 2) + POWER(y - #{epsg3857Y}, 2)) &lt;= POWER(#{projectedRadius}, 2)) AS policeStationCount
     </select>
+    
+    <select id="getCombinedSafetyStats" resultType="com.ssafy.lumiroom.ai.dto.InfraStatsDto">
+        SELECT 
+            cctv_count AS cctvCount,
+            security_light_count AS securityLightCount,
+            security_facility_count AS policeStationCount,
+            (SELECT COUNT(*) FROM street_lights 
+             WHERE ST_Distance_Sphere(location, ST_GeomFromText(#{wktPoint}, 4326)) &lt;= #{radius}) AS streetLightCount
+        FROM property_safety_summary
+        WHERE property_id = #{propertyId}
+    </select>
 
 </mapper>
