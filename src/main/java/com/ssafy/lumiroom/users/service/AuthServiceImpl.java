@@ -24,9 +24,10 @@ public class AuthServiceImpl implements AuthService{
     private final RedisTemplate<String, String> redisTemplate;
 
     @Transactional
-    public void signup(AuthReqDto.SignUp request) {
+    public boolean signup(AuthReqDto.SignUp request) {
         if (userMapper.existsByEmail(request.getEmail()) > 0) {
-            throw new RuntimeException("이미 존재하는 이메일입니다.");
+//            throw new RuntimeException("이미 존재하는 이메일입니다.");
+        	return false;
         }
 
         User user = User.builder()
@@ -37,25 +38,27 @@ public class AuthServiceImpl implements AuthService{
                 .build();
 
         userMapper.insertUser(user);
+        return true;
     }
 
     @Transactional
     public AuthResDto.Token login(AuthReqDto.Login request) {
-        User user = userMapper.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("가입되지 않은 이메일입니다."));
+        User user = userMapper.findByEmail(request.getEmail()).orElse(null);
+//                .orElseThrow(() -> new RuntimeException("가입되지 않은 이메일입니다."));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
-            throw new RuntimeException("비밀번호가 일치하지 않습니다.");
+//            throw new RuntimeException("비밀번호가 일치하지 않습니다.");
+        	return null;
         }
 
         String accessToken = jwtTokenProvider.createAccessToken(user.getEmail(), user.getRole());
         String refreshToken = jwtTokenProvider.createRefreshToken(user.getEmail());
 
-        // Refresh Token Redis 저장 (7일)
+        // Refresh Token Redis 저장 (1일)
         redisTemplate.opsForValue().set(
                 "RT:" + user.getEmail(),
                 refreshToken,
-                7,
+                1,
                 TimeUnit.DAYS
         );
 
@@ -154,7 +157,7 @@ public class AuthServiceImpl implements AuthService{
         String newRefreshToken = jwtTokenProvider.createRefreshToken(email);
 
         // 7. Redis에 새 Refresh Token 갱신 저장
-        redisTemplate.opsForValue().set("RT:" + email, newRefreshToken, 7, TimeUnit.DAYS);
+        redisTemplate.opsForValue().set("RT:" + email, newRefreshToken, 1, TimeUnit.DAYS);
 
         return new AuthResDto.Token(newAccessToken, newRefreshToken);
     }

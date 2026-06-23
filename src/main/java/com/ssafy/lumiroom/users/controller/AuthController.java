@@ -1,14 +1,20 @@
 package com.ssafy.lumiroom.users.controller;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.ssafy.lumiroom.users.dto.AuthReqDto;
 import com.ssafy.lumiroom.users.dto.AuthResDto;
 import com.ssafy.lumiroom.users.service.AuthService;
+
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -18,14 +24,23 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/signup")
-    public ResponseEntity<String> signup(@RequestBody AuthReqDto.SignUp request) {
-        authService.signup(request);
+    public ResponseEntity<String> signup(@Valid @RequestBody AuthReqDto.SignUp request) {
+        boolean isSuccess = authService.signup(request);
+        
+        if(!isSuccess) {
+        	return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("이미 사용 중인 이메일입니다.");
+        }
         return ResponseEntity.ok("회원가입 성공");
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResDto.Token> login(@RequestBody AuthReqDto.Login request) {
-        return ResponseEntity.ok(authService.login(request));
+    public ResponseEntity<?> login(@Valid @RequestBody AuthReqDto.Login request) {
+    	AuthResDto.Token tokens = authService.login(request);
+    	
+    	if(tokens==null) {
+    		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("이메일 또는 비밀번호가 일치하지 않습니다.");
+    	}
+        return ResponseEntity.ok(tokens);
     }
 
     @PostMapping("/logout")
