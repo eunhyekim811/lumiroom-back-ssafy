@@ -34,8 +34,9 @@
             p.id,
             COALESCE(NULLIF(p.property_name, ''), NULLIF(p.road_name, ''), NULLIF(p.lot_number, ''), '이름 없음')
                 AS property_name,
-            rsm.safety_score,
-            rsm.safety_grade,
+            p.built_year,
+            pss.safety_score,
+            pss.safety_grade,
             p.property_type AS rent_type,
             CASE
                 WHEN p.min_trade_amount IS NOT NULL
@@ -58,8 +59,8 @@
             p.latitude,
             p.longitude
         FROM properties p
-        LEFT JOIN region_safety_masters rsm
-          ON rsm.region_code = p.region_code
+        LEFT JOIN property_safety_summary pss
+          ON pss.property_id = p.id
         WHERE <include refid="withinRadiusCondition" />
         ORDER BY p.id DESC
         LIMIT #{limit} OFFSET #{offset}

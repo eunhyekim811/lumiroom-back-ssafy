@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ssafy.lumiroom.batch.mapper.PropertySafetySummaryMapper">
+
+    <select id="findTargetPropertyIds" resultType="long">
+        SELECT id
+        FROM properties
+        WHERE location IS NOT NULL
+          AND search_mbr IS NOT NULL
+        ORDER BY id
+        LIMIT #{_pagesize} OFFSET #{_skiprows}
+    </select>
+
+    <select id="countSafetyFacilities"
+            resultType="com.ssafy.lumiroom.batch.dto.PropertySafetyCounts">
+        SELECT
+            p.id AS property_id,
+            (
+                SELECT COUNT(*)
+                FROM cctv_infos c
+                WHERE MBRContains(p.search_mbr, c.location)
+                  AND ST_Distance_Sphere(
+                        POINT(p.longitude, p.latitude),
+                        POINT(ST_Y(c.location), ST_X(c.location))
+                      ) &lt;= #{radiusM}
+            ) AS cctv_count,
+            (
+                SELECT COUNT(*)
+                FROM security_lights sl
+                WHERE MBRContains(p.search_mbr, sl.location)
+                  AND ST_Distance_Sphere(
+                        POINT(p.longitude, p.latitude),
+                        POINT(ST_Y(sl.location), ST_X(sl.location))
+                      ) &lt;= #{radiusM}
+            ) AS security_light_count,
+            (
+                SELECT COUNT(*)
+                FROM security_facilities sf
+                WHERE sf.x IS NOT NULL
+                  AND sf.y IS NOT NULL
+                  AND sf.x != 0
+                  AND sf.y != 0
+                  AND sf.x BETWEEN
+                      (p.longitude * 20037508.34 / 180.0) - #{radiusM}
+                      AND (p.longitude * 20037508.34 / 180.0) + #{radiusM}
+                  AND sf.y BETWEEN
+                      (
+                          LOG(TAN((90.0 + p.latitude) * PI() / 360.0))
+                          / (PI() / 180.0) * 20037508.34 / 180.0
+                      ) - #{radiusM}
+                      AND (
+                          LOG(TAN((90.0 + p.latitude) * PI() / 360.0))
+                          / (PI() / 180.0) * 20037508.34 / 180.0
+                      ) + #{radiusM}
+                  AND ST_Distance_Sphere(
+                        POINT(p.longitude, p.latitude),
+                        POINT(
+                            sf.x / 20037508.34 * 180.0,
+                            180.0 / PI() * (
+                                2.0 * ATAN(EXP((sf.y / 20037508.34 * 180.0) * PI() / 180.0))
+                                - PI() / 2.0
+                            )
+                        )
+                      ) &lt;= #{radiusM}
+            ) AS security_facility_count
+        FROM properties p
+        WHERE p.id = #{propertyId}
+          AND p.location IS NOT NULL
+          AND p.latitude BETWEEN -90 AND 90
+          AND p.longitude BETWEEN -180 AND 180
+          AND p.search_mbr IS NOT NULL
+    </select>
+
+    <insert id="upsertPropertySafetySummary"
+            parameterType="com.ssafy.lumiroom.batch.domain.PropertySafetySummary">
+        INSERT INTO property_safety_summary (
+            property_id,
+            safety_score,
+            safety_grade,
+            cctv_count,
+            security_light_count,
+            security_facility_count,
+            radius_m,
+            calculation_version,
+            calculated_at
+        ) VALUES (
+            #{propertyId},
+            #{safetyScore},
+            #{safetyGrade},
+            #{cctvCount},
+            #{securityLightCount},
+            #{securityFacilityCount},
+            #{radiusM},
+            #{calculationVersion},
+            #{calculatedAt}
+        )
+        ON DUPLICATE KEY UPDATE
+            safety_score = VALUES(safety_score),
+            safety_grade = VALUES(safety_grade),
+            cctv_count = VALUES(cctv_count),
+            security_light_count = VALUES(security_light_count),
+            security_facility_count = VALUES(security_facility_count),
+            radius_m = VALUES(radius_m),
+            calculation_version = VALUES(calculation_version),
+            calculated_at = VALUES(calculated_at)
+    </insert>
+
+</mapper>
