@@ -16,6 +16,9 @@ public class PropertyListItemResponse {
     private Integer builtYear;
     private BigDecimal safetyScore;
     private String safetyGrade;
+    private int cctvCount;
+    private int securityLightCount;
+    private int securityFacilityCount;
     private String rentType;
     private String transactionType;
     private Long minDepositAmount;

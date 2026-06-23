@@ -21,6 +21,9 @@ class PropertyListMapperXmlTest {
                     .contains("p.built_year")
                     .contains("pss.safety_score")
                     .contains("pss.safety_grade")
+                    .contains("COALESCE(pss.cctv_count, 0) AS cctv_count")
+                    .contains("COALESCE(pss.security_light_count, 0) AS security_light_count")
+                    .contains("COALESCE(pss.security_facility_count, 0) AS security_facility_count")
                     .contains("LEFT JOIN property_safety_summary pss")
                     .contains("ON pss.property_id = p.id")
                     .doesNotContain("region_safety_masters");
