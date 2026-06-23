@@ -27,25 +27,30 @@ public class SafetyBriefingServiceImpl implements  SafetyBriefingService{
     }
 
     public StructuredBriefing generateStructuredBriefing(LocationReqDto reqDto) {
-        // [1. EPSG:4326 -> EPSG:3857 좌표 투영 수식 적용]
-        // 지구 타원체의 적도 반경상 미터 단위 환산 공식 사용
-        double rMajor = 6378137.0;
-        double epsg3857X = Math.toRadians(reqDto.lon()) * rMajor;
-        double epsg3857Y = Math.log(Math.tan(Math.PI / 4.0 + Math.toRadians(reqDto.lat()) / 2.0)) * rMajor;
-
-        // 위도에 따른 메르카토르 도법 왜곡 비율(Scale Factor) 보정 계산
-        double cosLat = Math.cos(Math.toRadians(reqDto.lat()));
-        double projectedRadius = 1000.0 / cosLat; // 1000m 실거리를 도법 미터단위 구역 크기로 스케일 업
+    	if (reqDto.propertyId() == null) {
+            throw new IllegalArgumentException("AI 안심 브리핑 분석서 생성을 하려면 매물 ID가 필수적입니다.");
+        }
+    	
+//        // [1. EPSG:4326 -> EPSG:3857 좌표 투영 수식 적용]
+//        // 지구 타원체의 적도 반경상 미터 단위 환산 공식 사용
+//        double rMajor = 6378137.0;
+//        double epsg3857X = Math.toRadians(reqDto.lon()) * rMajor;
+//        double epsg3857Y = Math.log(Math.tan(Math.PI / 4.0 + Math.toRadians(reqDto.lat()) / 2.0)) * rMajor;
+//
+//        // 위도에 따른 메르카토르 도법 왜곡 비율(Scale Factor) 보정 계산
+//        double cosLat = Math.cos(Math.toRadians(reqDto.lat()));
+//        double projectedRadius = 1000.0 / cosLat; // 1000m 실거리를 도법 미터단위 구역 크기로 스케일 업
 
         // [2. Retrieval 단계]
+    	// 축 정합성 보정 규칙 적용: MySQL 8.0 SRID 4326 표준 규격 축 순서인 POINT(위도 경도)로 빌드
         String wktPoint = String.format("POINT(%f %f)", reqDto.lat(), reqDto.lon());
-        InfraStatsDto stats = aiInfraMapper.getSafetyInfraStats(
-                wktPoint, 1000, epsg3857X, epsg3857Y, projectedRadius
-        );
+        // 하이브리드 RAG 데이터 조회 (가로등만 실시간 공간 계산, 나머지는 캐시 테이블 적재값 조인)
+        InfraStatsDto stats = aiInfraMapper.getCombinedSafetyStats(reqDto.propertyId(), wktPoint, 1000);
 
         // [3. Augment 단계]
         String promptTemplate = """
            분석 구역 중심 좌표: 위도 {lat}, 경도 {lon} 인근 지역
+           매물 식별 ID: {propertyId}
             
            해당 위치 반경 1000m 인프라 수집 데이터:
            - 방범용 CCTV: {cctv}대
@@ -74,6 +79,7 @@ public class SafetyBriefingServiceImpl implements  SafetyBriefingService{
                 .user(u -> u.text(promptTemplate)
                         .param("lat", reqDto.lat())
                         .param("lon", reqDto.lon())
+                        .param("propertyId", String.valueOf(reqDto.propertyId()))
                         .param("cctv", stats.cctvCount())
                         .param("streetLight", stats.streetLightCount())
                         .param("securityLight", stats.securityLightCount())

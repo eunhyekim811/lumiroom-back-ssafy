@@ -13,4 +13,10 @@ public interface AiInfraMapper {
             @Param("epsg3857Y") double epsg3857Y,
             @Param("projectedRadius") double projectedRadius
     );
+    
+    InfraStatsDto getCombinedSafetyStats(
+            @Param("propertyId") Long propertyId,
+            @Param("wktPoint") String wktPoint,
+            @Param("radius") int radius
+    );
 }
