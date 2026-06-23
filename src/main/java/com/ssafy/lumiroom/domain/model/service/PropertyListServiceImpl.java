@@ -54,4 +54,9 @@ public class PropertyListServiceImpl implements PropertyListService {
     private ResponseStatusException badRequest(String message) {
         return new ResponseStatusException(HttpStatus.BAD_REQUEST, message);
     }
+
+	@Override
+	public PropertyListItemResponse getPropertyDetail(Long id) {
+		return propertyListMapper.findByIdWithSafety(id);
+	}
 }

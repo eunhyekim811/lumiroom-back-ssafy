@@ -22,4 +22,7 @@ public interface PropertyListMapper {
             @Param("lng") double lng,
             @Param("radius") double radius
     );
+    
+    PropertyListItemResponse findByIdWithSafety(@Param("id") Long id);
+    
 }
