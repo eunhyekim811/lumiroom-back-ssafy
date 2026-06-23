@@ -99,7 +99,24 @@
         SET
             latitude = #{latitude},
             longitude = #{longitude},
-            location = ST_SRID(POINT(#{longitude}, #{latitude}), 4326),
+            location = ST_SRID(POINT(#{latitude}, #{longitude}), 4326),
+            search_mbr = ST_GeomFromText(
+                CONCAT(
+                    'POLYGON((',
+                    #{latitude} - (1000.0 / 111320.0), ' ',
+                    #{longitude} - (1000.0 / (111320.0 * GREATEST(ABS(COS(RADIANS(#{latitude}))), 0.000001))), ',',
+                    #{latitude} + (1000.0 / 111320.0), ' ',
+                    #{longitude} - (1000.0 / (111320.0 * GREATEST(ABS(COS(RADIANS(#{latitude}))), 0.000001))), ',',
+                    #{latitude} + (1000.0 / 111320.0), ' ',
+                    #{longitude} + (1000.0 / (111320.0 * GREATEST(ABS(COS(RADIANS(#{latitude}))), 0.000001))), ',',
+                    #{latitude} - (1000.0 / 111320.0), ' ',
+                    #{longitude} + (1000.0 / (111320.0 * GREATEST(ABS(COS(RADIANS(#{latitude}))), 0.000001))), ',',
+                    #{latitude} - (1000.0 / 111320.0), ' ',
+                    #{longitude} - (1000.0 / (111320.0 * GREATEST(ABS(COS(RADIANS(#{latitude}))), 0.000001))),
+                    '))'
+                ),
+                4326
+            ),
             updated_at = CURRENT_TIMESTAMP
         WHERE id = #{id}
     </update>
