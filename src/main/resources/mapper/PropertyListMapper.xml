@@ -37,6 +37,9 @@
             p.built_year,
             pss.safety_score,
             pss.safety_grade,
+            COALESCE(pss.cctv_count, 0) AS cctv_count,
+            COALESCE(pss.security_light_count, 0) AS security_light_count,
+            COALESCE(pss.security_facility_count, 0) AS security_facility_count,
             p.property_type AS rent_type,
             CASE
                 WHEN p.min_trade_amount IS NOT NULL
